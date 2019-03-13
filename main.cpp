@@ -13,6 +13,8 @@ extern double rainfall_init();
 extern double log_likelihood(vector <atom*> p);
 extern double rainfall_finish();
 
+rng randomNumber;
+
 class model {
   vector <atom*> atoms;
   double loglike;
@@ -32,28 +34,46 @@ public:
     }
   }
 
+  atom *getAtom(uint8_t atom_n) {
+    return atoms[atom_n];
+  }
+
   void compute(double (*likefunc)(vector <atom*>)) {
     loglike = likefunc(atoms);
   }
 
   double llikelihood() const { return loglike; }
 
-  model* step() {
+  model* step(double (*likefunc)(vector <atom*>)) {
     model* destination = new model(atoms[0]->getSize(),atoms.size());
+    double newlike;
 
     for (auto i=0;i<atoms.size();i++) {
       for (auto j=0;j<atoms[0]->getSize();j++) {
-        destination->atoms[i]->setParameter(j, atoms[i]->getParameter(j));
+        double dx = randomNumber.gaussian();
+        destination->atoms[i]->setParameter(j, atoms[i]->getParameter(j)+dx);
       }
     }
 
+    compute(likefunc);
+    destination->compute(likefunc);
+    newlike=destination->llikelihood();
+
+    if ((newlike-loglike)<log(randomNumber.flat())) {
+      for (auto i=0;i<atoms.size();i++) {
+        for (auto j=0;j<atoms[0]->getSize();j++) {
+          double dx = randomNumber.gaussian();
+          destination->atoms[i]->setParameter(j, atoms[i]->getParameter(j));
+        }
+      }
+    }
     return destination;
   }
 };
 
 int main() {
   vector <model*> chain;
-  uint32_t maxmodels = 10;
+  uint32_t maxmodels = 1000;
   bool verbose = true;
   model *currentModel;
 
@@ -64,10 +84,14 @@ int main() {
   chain[0]->compute(log_likelihood);
 
   for (auto i=0;i<maxmodels;i++) {
-    if (verbose) {
-      cout << i << ": " << chain.back()->llikelihood() << endl;
+    if (verbose && i % 100 == 0) {
+      cout << i << ": ";
+      for (auto j=0;j<3;j++) {
+        cout << " " << chain.back()->getAtom(0)->getParameter(j);
+      }
+      cout << " :" << chain.back()->llikelihood() << endl;
     }
-    currentModel = chain.back()->step();
+    currentModel = chain.back()->step(log_likelihood);
     currentModel->compute(log_likelihood);
     chain.push_back(currentModel);
   }

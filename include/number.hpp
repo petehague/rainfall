@@ -4,6 +4,7 @@
 #include <cinttypes>
 #include <random>
 #include <chrono>
+#include <cmath>
 
 static uint16_t raninit_counter = 1;
 
@@ -18,6 +19,10 @@ public:
 
   double flat() {
     return (double)generator() / (double)UINT32_MAX;
+  }
+
+  double gaussian() {
+    return sin(2.*M_PI*flat())*sqrt(-2*(log(generator())-log((double)UINT32_MAX)));;
   }
 };
 
