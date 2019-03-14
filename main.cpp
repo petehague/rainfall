@@ -11,71 +11,31 @@ using namespace std;
 
 extern double rainfall_init();
 extern double log_likelihood(vector <atom*> p);
+extern void per_model(model* m);
 extern double rainfall_finish();
 
 rng randomNumber;
 
-class model {
-  vector <atom*> atoms;
-  double loglike;
-
-public:
-  model() { }
-
-  model(uint8_t nparams, uint8_t natoms) {
-    for (auto i=0;i<natoms;i++) {
-      atoms.push_back(new atom(nparams));
-    }
+double getrate(vector <bool> n) {
+  double rate = 0;
+  for (auto i=0;i<n.size();i++) {
+    if (n[i]) { rate += 1; }
   }
-
-  ~model() {
-    for (auto i=0;i<atoms.size();i++) {
-      delete atoms[i];
-    }
-  }
-
-  atom *getAtom(uint8_t atom_n) {
-    return atoms[atom_n];
-  }
-
-  void compute(double (*likefunc)(vector <atom*>)) {
-    loglike = likefunc(atoms);
-  }
-
-  double llikelihood() const { return loglike; }
-
-  model* step(double (*likefunc)(vector <atom*>)) {
-    model* destination = new model(atoms[0]->getSize(),atoms.size());
-    double newlike;
-
-    for (auto i=0;i<atoms.size();i++) {
-      for (auto j=0;j<atoms[0]->getSize();j++) {
-        double dx = randomNumber.gaussian();
-        destination->atoms[i]->setParameter(j, atoms[i]->getParameter(j)+dx);
-      }
-    }
-
-    compute(likefunc);
-    destination->compute(likefunc);
-    newlike=destination->llikelihood();
-
-    if ((newlike-loglike)<log(randomNumber.flat())) {
-      for (auto i=0;i<atoms.size();i++) {
-        for (auto j=0;j<atoms[0]->getSize();j++) {
-          double dx = randomNumber.gaussian();
-          destination->atoms[i]->setParameter(j, atoms[i]->getParameter(j));
-        }
-      }
-    }
-    return destination;
-  }
-};
+  return rate/(double)n.size();
+}
 
 int main() {
   vector <model*> chain;
-  uint32_t maxmodels = 1000;
+  uint32_t maxmodels = 10000;
   bool verbose = true;
   model *currentModel;
+  double stepsize[3];
+  vector <bool> acceptance;
+  uint32_t lookback = 100;
+  uint32_t lbcounter = 0;
+  double rate, targetRate = 0.5;
+
+  for (auto i=0;i<3;i++) { stepsize[i] = 1.; }
 
   rainfall_init();
 
@@ -84,19 +44,35 @@ int main() {
   chain[0]->compute(log_likelihood);
 
   for (auto i=0;i<maxmodels;i++) {
-    if (verbose && i % 100 == 0) {
+    if (verbose && i % (maxmodels/10) == 0) {
       cout << i << ": ";
       for (auto j=0;j<3;j++) {
         cout << " " << chain.back()->getAtom(0)->getParameter(j);
       }
       cout << " :" << chain.back()->llikelihood() << endl;
     }
-    currentModel = chain.back()->step(log_likelihood);
+    currentModel = chain.back()->step(log_likelihood, stepsize);
     currentModel->compute(log_likelihood);
     chain.push_back(currentModel);
+    if (acceptance.size()<lookback) {
+      acceptance.push_back(chain.back()->lastaccept());
+    } else {
+      acceptance[lbcounter++] = chain.back()->lastaccept();
+      if (lbcounter==acceptance.size()) { lbcounter = 0; }
+      rate = getrate(acceptance);
+      for (auto i=0;i<3;i++) {
+        stepsize[i] *= (targetRate-rate)/targetRate;
+        if (stepsize[i]<1e-6) { stepsize[i]=1e-6; }
+        //cout << stepsize[i] << " ";
+      }
+    }
+
+    per_model(chain.back());
   }
 
   for (auto i=0;i<chain.size();i++) {
     delete chain[i];
   }
+
+  rainfall_finish();
 }

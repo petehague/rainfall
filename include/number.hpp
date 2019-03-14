@@ -5,6 +5,7 @@
 #include <random>
 #include <chrono>
 #include <cmath>
+#include <vector>
 
 static uint16_t raninit_counter = 1;
 
@@ -48,4 +49,10 @@ public:
   unity operator+(const unity &other);
   unity operator-(const unity &other);
 };
+
+
+
+double meanvalue(std::vector <unity> numlist);
+double stdev(std::vector <unity> numlist);
+
 #endif

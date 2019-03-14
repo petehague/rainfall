@@ -14,6 +14,8 @@ uint32_t beamnaxis1;
 uint32_t cra, cdec;
 double noiseLevel;
 
+vector <unity> x,y,F;
+
 inline uint32_t coords(uint32_t ra, uint32_t dec, uint32_t naxis) {
   return naxis*dec + ra;
 }
@@ -76,18 +78,38 @@ double log_likelihood(vector <atom*> params) {
     uint32_t rabin_i = params[i]->getParameter(0)*naxis1;
     uint32_t decbin_i = params[i]->getParameter(1)*naxis1;
     double flux_i = params[i]->getParameter(2);
-    result += 2. * flux_i * dmap[coords(rabin_i, decbin_i,naxis1)];
+    flux_i = noiseLevel*(flux_i/(1.-flux_i));
+    result -= 2. * flux_i * dmap[coords(rabin_i, decbin_i,naxis1)];
     for (auto j=0;j<natoms;j++) {
       uint32_t dra = cra - (params[j]->getParameter(0)*naxis1-rabin_i);
       uint32_t ddec = cdec - (params[j]->getParameter(1)*naxis1-decbin_i);
       double flux_j = params[j]->getParameter(2);
-      result -= flux_i * flux_j * dbeam[coords(dra, ddec,beamnaxis1)];
+      flux_j = noiseLevel*(flux_j/(1.-flux_j));
+      result += flux_i * flux_j * dbeam[coords(dra, ddec,beamnaxis1)];
     }
   }
 
   return -0.5*result/(noiseLevel*noiseLevel);
 }
 
-double rainfall_finish() {
+void per_model(model *m) {
+  x.push_back(m->getAtom(0)->getUnity(0));
+  y.push_back(m->getAtom(0)->getUnity(1));
+  F.push_back(m->getAtom(0)->getUnity(2));
+}
 
+double rainfall_finish() {
+  double meanf, upper, lower, stdf;
+
+  cout << "x: " << meanvalue(x)*naxis1 << " +- " << stdev(x)*naxis1 << endl;
+  cout << "y: " << meanvalue(y)*naxis1 << " +- " << stdev(y)*naxis1 << endl;
+
+  meanf = meanvalue(F);
+  meanf = noiseLevel*(meanf/(1.-meanf));
+  upper = meanvalue(F)+stdev(F);
+  lower = upper - 2*stdev(F);
+  upper = noiseLevel*(upper/(1.-upper));
+  lower = noiseLevel*(lower/(1.-lower));
+  stdf = 0.5*(upper-lower);
+  cout << "F: " << meanf << " +- " << stdf << endl;
 }

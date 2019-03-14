@@ -63,3 +63,29 @@ unity unity::operator=(double x) {
   i = (uint32_t)(x*(double)UINT32_MAX);
   return *this;
 }
+
+double meanvalue(std::vector <unity> numlist) {
+  double result;
+
+  result = 0;
+  for (auto index=0;index<numlist.size();index++) {
+    result+=numlist[index].val();
+  }
+  result /= numlist.size();
+
+  return result;
+}
+
+double stdev(std::vector <unity> numlist) {
+  double mean, result;
+
+  mean = meanvalue(numlist);
+
+  result = 0;
+  for (auto index=0;index<numlist.size();index++) {
+    result+=(numlist[index].val()-mean)*(numlist[index].val()-mean);
+  }
+  result /= numlist.size()-1;
+
+  return sqrt(result);
+}
