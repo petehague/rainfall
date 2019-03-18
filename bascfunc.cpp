@@ -92,6 +92,12 @@ double log_likelihood(vector <atom*> params) {
   return -0.5*result/(noiseLevel*noiseLevel);
 }
 
+void rainfall_clear(vector <vector <atom*>> processQueue, vector <double *> results) {
+  for (auto i=0;i<processQueue.size();i++) {
+    results[i] = log_likelihood(processQueue[i]);
+  }
+}
+
 void per_model(model *m) {
   x.push_back(m->getAtom(0)->getUnity(0));
   y.push_back(m->getAtom(0)->getUnity(1));

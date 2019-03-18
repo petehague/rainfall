@@ -1,11 +1,11 @@
 CXX = g++
 CPPFLAGS = -g -std=c++11
 
-rainfall: bin/number.o bin/main.o bin/testfunc.o
-	$(CXX) $(CPPFLAGS) bin/main.o bin/number.o bin/testfunc.o -orainfall
+rainfall: bin/number.o bin/main.o bin/testfunc.o bin/queue.o
+	$(CXX) $(CPPFLAGS) bin/main.o bin/number.o bin/testfunc.o bin/queue.o -orainfall
 
-basc: bin/number.o bin/main.o bin/bascfunc.o
-	$(CXX) $(CPPFLAGS) bin/main.o bin/number.o bin/bascfunc.o -obasc
+basc: bin/number.o bin/main.o bin/bascfunc.o bin/queue.o
+	$(CXX) $(CPPFLAGS) bin/main.o bin/number.o bin/bascfunc.o bin/queue.o -obasc
 
 hmc: bin/pick.o bin/hmc.o
 	$(CXX) $(CPPFLAGS) bin/pick.o bin/hmc.o -ohmctest

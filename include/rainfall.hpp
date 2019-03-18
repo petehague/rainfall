@@ -84,7 +84,7 @@ public:
 
   bool lastaccept() const { return accepted; }
 
-  model* step(double (*likefunc)(vector <atom*>), double *stepsize) {
+  model* step(double (*likefunc)(vector <atom*>), double *stepsize, double lambda) {
     model* destination = new model(atoms[0]->getSize(),atoms.size());
     double newlike;
 
@@ -105,7 +105,7 @@ public:
      Rejection critera; make the new model the same as the previous one
      Use this expression as division is safer than subtraction in floating point
     */
-    if (exp(newlike)/exp(loglike)<randomNumber.flat()) {
+    if (exp(newlike*lambda)/exp(loglike*lambda)<randomNumber.flat()) {
     //if (newlike<loglike) {
       for (auto i=0;i<atoms.size();i++) {
         for (auto j=0;j<atoms[0]->getSize();j++) {
