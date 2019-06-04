@@ -47,6 +47,7 @@ public:
 class model {
   vector <atom> atoms;
   double loglike;
+  vector <double> stepsize;
   bool accepted;
 
 public:
@@ -57,6 +58,8 @@ public:
   void compute(procQueue* evaluator);
   double llikelihood() const { return loglike; }
   bool lastaccept() const { return accepted; }
+  double* prepare_step(procQueue *evaluator);
+  model* resolve_step(procQueue* evaluator, double lambda, double gradpoints);
   model* step(procQueue* evaluator, double lambda);
 };
 

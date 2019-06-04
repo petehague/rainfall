@@ -37,6 +37,7 @@ int main() {
       }
       cout << " :" << chain.back()->llikelihood() << endl;
     }
+    chain.back()->prepare_step(evaluator);
     currentModel = chain.back()->step(evaluator, lambda);
     currentModel->compute(evaluator);
     chain.push_back(currentModel);

@@ -64,6 +64,16 @@ unity unity::operator=(double x) {
   return *this;
 }
 
+unity unity::operator+(double x) {
+  int64_t a = i;
+  int64_t b = (uint32_t)(x*(double)UINT32_MAX);
+
+  if ((a+b)>(int64_t)UINT32_MAX) {
+    return unity((uint32_t)UINT32_MAX, true);
+  }
+  return unity((uint32_t)(a+b));
+}
+
 double meanvalue(std::vector <unity> numlist) {
   double result;
 

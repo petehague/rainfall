@@ -47,6 +47,7 @@ public:
   unity operator=(double x);
   unity operator=(uint32_t x);
   unity operator+(const unity &other);
+  unity operator+(double x);
   unity operator-(const unity &other);
 };
 
